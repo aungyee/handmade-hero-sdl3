@@ -4,6 +4,7 @@ int main(void)
 {
 	SDL_Window *window;
 	SDL_Renderer *renderer;
+	SDL_Texture *texture;
 	bool done = false;
 
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -11,7 +12,7 @@ int main(void)
 		return 1;
 	}
 
-	window = SDL_CreateWindow("Hello From SDL3", 800, 600, 0);
+	window = SDL_CreateWindow("Hello From SDL3", 800, 600, SDL_WINDOW_RESIZABLE);
 
 	if (!window) {
 		SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
@@ -33,26 +34,25 @@ int main(void)
 				SDL_Log("Event: Quit");
 				done = true;
 				break;
+			case SDL_EVENT_WINDOW_RESIZED:
+				int width, height;
+
+				SDL_GetWindowSize(window, &width, &height);
+				SDL_Log("Event: Window Resized to @%dx%d", width, height);
+
+				if(texture) {
+					SDL_DestroyTexture(texture);
+				}
+
+				texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+				break;
 			default:
 				SDL_Log("Unhandled Event: %d", event.type);
 			}
 		}
 
-		static bool is_white = true;
-
-		if (is_white) {
-			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-			is_white = false;
-		} else {
-			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-			is_white = true;
-		}
-
-		SDL_RenderClear(renderer);
+		SDL_RenderTexture(renderer, texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
-
-		SDL_Delay(100);
-
 	}
 
 	SDL_DestroyWindow(window);
